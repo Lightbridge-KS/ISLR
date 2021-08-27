@@ -1,0 +1,18 @@
+Package: Statistical_Learning
+Title: Statistical Learning
+Authors@R: 
+    person(given = "Kittipos",
+           family = "Sirivongrungson",
+           role = c("aut", "cre"),
+           email = "ki11ip0.s.a.s@gmail.com")
+Description: A collection of Lab of "An Introduction to Statistical Learning, with Applications in R" with my modification. 
+Encoding: UTF-8
+LazyData: true
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.1.1
+Depends: 
+    tidyverse
+Imports: 
+    here,
+    usethis,
+    ISLR2

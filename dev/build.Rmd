@@ -1,0 +1,41 @@
+---
+title: "Build"
+output: html_notebook
+---
+
+```{r setup, include=FALSE}
+knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file()) # Set WD to Root
+here::i_am("dev/build.Rmd")
+library(tidyverse)
+library(here)
+library(usethis)
+```
+
+# Git
+
+```{r}
+usethis::use_git()
+```
+
+## Git Ignore
+
+```{r}
+usethis::use_git_ignore("quiz")
+usethis::use_git_ignore("quiz_ans")
+```
+
+# DESCRIPTION
+
+```{r}
+usethis::use_description(check_name = F)
+```
+
+# Dependency
+
+```{r}
+usethis::use_package("here")
+usethis::use_package("usethis")
+usethis::use_package("tidyverse", "depend")
+usethis::use_package("ISLR2")
+```
+
