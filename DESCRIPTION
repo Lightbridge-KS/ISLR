@@ -1,4 +1,4 @@
-Package: Statistical_Learning
+Package: ISLR
 Title: Statistical Learning
 Authors@R: 
     person(given = "Kittipos",
