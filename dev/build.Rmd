@@ -36,6 +36,10 @@ usethis::use_description(check_name = F)
 usethis::use_package("here")
 usethis::use_package("usethis")
 usethis::use_package("tidyverse", "depend")
+usethis::use_package("ISLR")
 usethis::use_package("ISLR2")
+usethis::use_package("MASS")
+usethis::use_package("broom")
+usethis::use_package("plotly")
 ```
 

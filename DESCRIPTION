@@ -15,4 +15,8 @@ Depends:
 Imports: 
     here,
     usethis,
-    ISLR2
+    ISLR2,
+    MASS,
+    broom,
+    plotly,
+    ISLR

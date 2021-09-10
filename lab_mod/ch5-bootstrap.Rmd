@@ -1,0 +1,326 @@
+---
+title: "Block Bootstrap"
+date: "2021-09-10"
+author: "Kittipos Sirivongrungson"
+output:
+  html_document:
+    df_print: paged
+    code_folding: "show"
+    toc: TRUE
+    toc_float: TRUE
+    code_download: TRUE
+---
+
+```{r setup, include=FALSE}
+knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file()) # Set WD to Root
+here::i_am("lab_mod/ch5-bootstrap.Rmd")
+library(tidyverse)
+library(here)
+theme_set(theme_bw())
+```
+
+I will demonstrate how to do block bootstrap using **Xy** dataset from ISLR's practice questions in the chapter 5.
+
+## Load Data
+
+```{r load}
+Xy <- get(load(here("data/5.R.RData")))
+```
+
+
+# Let's Explore Data
+
+Data Frame `Xy` has 3 numeric variables 
+
+```{r}
+str(Xy)
+```
+
+```{r}
+summary(Xy)
+```
+
+# Fit Linear Model
+
+Supposed we want to fit a linear regression model of `y` on `X1` and `X2`. 
+
+### Q1: What is the standard error for coefficients of X2 or ($\beta_2$) ?
+
+```{r Xy_lm.fit}
+Xy_lm.fit <- lm(y ~ X1 + X2, data = Xy)
+
+summary(Xy_lm.fit)
+```
+
+```{r, include=FALSE}
+X2_std.err <- sqrt(diag(vcov(Xy_lm.fit)))["X2"]
+```
+
+As you can see that $S.E.$ of $\beta_2$ was `r X2_std.err`
+
+### Helper function 
+
+Write a helper function to shuffles rows of `Xy`, fits the Linear model and return $\beta_2$.
+
+```{r Xy_lm_boot_fn}
+Xy_lm_boot_fn <- function(data, index){
+  
+  lm_coef <- coef(lm(y ~ X1 + X2, data = data, subset = index))
+  lm_coef["X2"]
+  
+}
+```
+
+Let's test the some iterations of the bootstapped $\beta_2$.
+
+```{r}
+set.seed(123)
+
+index1 <- sample(1000, 1000, replace = TRUE)
+index2 <- sample(1000, 1000, replace = TRUE)
+
+Xy_lm_boot_fn(Xy, index1)
+Xy_lm_boot_fn(Xy, index2)
+```
+
+OK, It works!
+
+# Regular Bootstrap
+
+I will use `{boot}` package to compute bootstrap of 1000 replicates using `Xy_lm_boot_fn()` as `statistic` argument in `boot()`.
+
+```{r}
+library(boot)
+```
+
+```{r}
+Xy_lm_boot <- boot(Xy, Xy_lm_boot_fn, R = 1000)
+
+Xy_lm_boot
+```
+
+The $S.E.$ of the bootstapped $\beta_2$ is `r sd(Xy_lm_boot$t)`
+
+```{r eval=FALSE, include=FALSE}
+sd(Xy_lm_boot$t)
+```
+
+
+# Auto-Correlation
+
+**Why we need to do block bootstrap ?** 
+
+Let's see plots of observation in x-axis and each variables in y-axis.
+I will use `{ggplot2}` to do this. 
+
+First I need to add rownames to column and pivot to long format.
+
+```{r Xy_to_long}
+Xy_to_long <- function(data) {
+  
+  data %>% 
+    tibble::rownames_to_column("Observations") %>% 
+    dplyr::mutate(Observations = as.numeric(Observations)) %>% 
+    tidyr::pivot_longer(cols = X1:y, names_to = "Variables", values_to = "Values") %>% 
+    dplyr::mutate(Variables = factor(Variables, levels = c( "y", "X1", "X2")))
+    
+}
+```
+
+
+```{r Xy_long}
+Xy_long <- Xy_to_long(Xy)
+head(Xy_long)
+```
+
+And then plot using `geom_line`:
+
+```{r obs_plot1}
+Xy_long %>%   
+  ggplot(aes(Observations, Values, color = Variables, linetype = Variables)) +
+  geom_line(aes(group = Variables)) +
+  labs(title = "Auto-Correlation between Variables", 
+       caption = "\"Xy\" dataset from ISLR")
+```
+
+(You can also do the same thing by using base R plot by `matplot(Xy,type="l")` as in ISLR's example.)
+
+From this plot, It can be seen that there are correlation between observations (rows).
+A given data point (e.g. $(X1_i, X2_i, Y_i)$) would influence the value of next data points (e.g. $(X1_{i+1}, X2_{i+1}, Y_{i+1})$). This is called auto-correlation.
+
+Thus, using regular bootstap might rearrange the consecutive rows that are correlated and modify the result.
+
+**Let's plot observation vs values after bootstapped.**
+
+```{r}
+set.seed(123)
+
+## Shuffle Rows
+index1 <- sample(1000, 1000, replace = TRUE)
+Xy_row_shuffle1 <- Xy[index1, ]
+
+
+rownames(Xy_row_shuffle1) <- 1:1000
+```
+
+
+```{r obs_plot2}
+Xy_to_long(Xy_row_shuffle1) %>%   
+  ggplot(aes(Observations, Values, color = Variables, linetype = Variables)) +
+  geom_line(aes(group = Variables)) +
+  labs(title = "Lost Auto-Correlation after Bootstrapped", 
+       caption = "bootstapped \"Xy\" dataset from ISLR")
+```
+
+
+# Block Bootstrap
+
+### Helper function
+
+I've created a helper function to obtain an indexes of block bootstrap with following arguments.
+
+-   `n_block`: Total number of blocks
+-   `size`: Number of observation in each block
+
+```{r get_block_index}
+get_block_index <- function(n_block, # Number of block
+                            size # Number of observation in each block
+                            ) {
+  
+  block1 <- 1:size
+  
+  step <- 0:(n_block-1)*size
+  step_boot <- sample(step, n_block, replace = TRUE)
+    
+  step_expand <- rep(step_boot, each = size)
+  block_expand <- rep(block1, n_block)
+  
+  block_expand + step_expand
+
+}
+```
+
+Let's test `get_block_index()` function. 
+
+For example: 3 blocks with 5 observations each.
+
+```{r}
+set.seed(123)
+
+get_block_index(n_block =  3,size =  5)
+get_block_index(n_block =  3,size =  5)
+```
+
+Ok, Looks like it works!
+
+### Create Block Bootstrap Dataset
+
+I will add "block" column containing numeric vector form 1-10 to flag each block so we can keep tract of data when we performed a block bootstrap.
+
+```{r Xy_block10}
+Xy_block10 <- Xy
+# Add "block" column to keep tract
+Xy_block10$block <- factor(rep(1:10, each = 100))
+
+summary(Xy_block10)
+```
+
+Now, try simulate block bootstapped dataset:
+
+```{r}
+set.seed(123)
+index_block10_a <- get_block_index(n_block = 10, size = 100)
+index_block10_b <- get_block_index(n_block = 10, size = 100)
+
+Xy_block10[index_block10_a, ]$block %>% unique()
+Xy_block10[index_block10_b, ]$block %>% unique()
+```
+
+## Block bootstrapped of Linear Model
+
+Finally, I will perform block bootstrapped of the coefficient $\beta_2$.
+
+Recall that $\beta_2$ is a coefficient of `X2` in the linear regression model of `y` on `X1` and `X2`.
+
+I will need to create this final wrapper function `Xy_lm_boot_fn_block()`.
+The main argument were the followings:
+
+-   `data`: Xy dataset
+-   `n_block`: Total number of blocks to bootstrap
+-   `size`: Number of observation in each block 
+-   `R`: The number of bootstrap replicates
+
+
+```{r Xy_lm_boot_fn_block}
+Xy_lm_boot_fn_block <- function(data,
+                                n_block = 10, size = 100, 
+                                R,
+                                return_raw = FALSE
+                                ) {
+  
+  coeffs <- numeric(n_block)
+  for (i in 1:R) {
+    
+    index <- get_block_index(n_block, size)
+    coeffs[i] <- Xy_lm_boot_fn(data = data, index = index)
+    
+  }
+
+  if(return_raw) return(coeffs)
+  list(original = mean(coeffs),
+       std.err = sd(coeffs))
+  
+}
+```
+
+
+## Final Results
+
+Block bootstrapped of linear model `y` on `X1` and `X2`; then extract mean and standard error of bootstrapped coefficient `X2` ($\beta_2$).
+
+-   Number of block = 10
+-   Size of each block = 100
+-   Replicate = 1000
+
+```{r}
+Xy_lm_boot_fn_block(Xy_block10, n_block = 10, size = 100, R = 1000)
+```
+
+Compare it with regular bootstrap
+
+```{r}
+Xy_lm_boot
+```
+
+And with no bootstrap (`X2`)
+
+```{r}
+summary(Xy_lm.fit)
+```
+
+### Plot of bootstrapped coefficients
+
+```{r Xy_boot_coeffs}
+Xy_boot_coeffs <- Xy_lm_boot_fn_block(Xy_block10, n_block = 10, size = 100, R = 1000, 
+                    return_raw = TRUE)
+```
+
+
+```{r hist, message=FALSE}
+library(latex2exp)
+
+data.frame(beta2 = Xy_boot_coeffs) %>% 
+  ggplot(aes(beta2)) +
+  geom_histogram(fill = "grey", color = "black") +
+  
+  geom_vline(aes(xintercept = mean(Xy_boot_coeffs)), color = "red") +
+  annotate("label", x = mean(Xy_boot_coeffs), y = 125, 
+           label = "mean", 
+           color = "red") +
+  
+  labs(x = TeX("$\\hat{\\beta^*_2}$"), y = "Count", 
+       title = TeX("Distribution of block bootstrapped $\\beta_2$")) 
+```
+
+
+

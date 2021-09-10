@@ -1,0 +1,62 @@
+---
+title: "CH4: Classification Lab"
+output: html_notebook
+---
+
+```{r setup, include=FALSE}
+knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file()) # Set WD to Root
+here::i_am("lab_mod/ch4-classification-lab.Rmd")
+library(tidyverse)
+library(here)
+library(ISLR2)
+library(GGally)
+```
+
+# Explore Data
+
+```{r}
+glimpse(Smarket)
+```
+
+
+```{r}
+skimr::skim(Smarket)
+```
+
+
+# Plot 
+
+```{r plot_ggpairs message=FALSE, warning=FALSE}
+Smarket %>% 
+  GGally::ggpairs(aes(color = Direction),
+                  upper = list(continuous = "density", combo = "box_no_facet"),
+                  lower = list(continuous = "points", combo = "dot_no_facet"),
+                  alpha = 0.4,
+                  title = "Smarket Data"
+  )
+
+lbr::ggsave_mac(here("plot/Smarket_ggpairs.png"))
+```
+
+
+```{r plot_pairs }
+png(here("plot/Smarket_pairs.png"), 
+    width = lbr::fig.mac$wd, height = lbr::fig.mac$ht, units = "in",
+    res = 320)
+
+pairs(Smarket, col = Smarket$Direction)
+
+dev.off()
+```
+
+# Fit Logistic Regression
+
+```{r chunk4}
+glm.fits <- glm(
+    Direction ~ Lag1 + Lag2 + Lag3 + Lag4 + Lag5 + Volume,
+    data = Smarket, family = binomial
+  )
+summary(glm.fits)
+```
+
+

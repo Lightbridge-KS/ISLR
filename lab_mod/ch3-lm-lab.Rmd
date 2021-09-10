@@ -1,0 +1,131 @@
+---
+title: "Linear Model - Lab"
+output: html_notebook
+---
+
+```{r setup, include=FALSE}
+knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file()) # Set WD to Root
+here::i_am("lab_mod/ch3-lm-lab.Rmd")
+library(here)
+library(ISLR2)
+library(MASS)
+library(tidyverse)
+library(broom)
+library(plotly)
+```
+
+```{r}
+head(Boston)
+```
+
+# `lstat` vs `medv`
+
+## Plot: `lstat` vs `medv`
+
+
+```{r}
+Boston %>% 
+  ggplot(aes(lstat, medv)) +
+  geom_point(alpha = 0.4) +
+  geom_smooth(method = "lm")
+```
+
+## Fit LM: `lstat` vs `medv`
+
+```{r}
+boston_lm_medv.lstat <- lm(medv ~ lstat, Boston)
+boston_lm_medv.lstat
+```
+
+```{r}
+summary(boston_lm_medv.lstat)
+```
+```{r}
+names(boston_lm_medv.lstat)
+```
+
+Confidence Interval
+
+```{r}
+confint(boston_lm_medv.lstat)
+```
+
+### Broom's Way
+
+```{r}
+broom::tidy(boston_lm_medv.lstat)
+```
+
+```{r}
+broom::augment(boston_lm_medv.lstat)
+```
+
+### Predict
+
+```{r}
+predict(boston_lm_medv.lstat, data.frame(lstat = (c(5, 10, 15))),
+    interval = "confidence")
+```
+
+```{r}
+predict(boston_lm_medv.lstat, data.frame(lstat = (c(5, 10, 15))),
+    interval = "prediction")
+```
+
+
+# Multiple LM
+
+## `medv ~ lstat + age`
+
+```{r}
+boston_lm_medv.lstat_age <- lm(medv ~ lstat + age, data = Boston)
+summary(boston_lm_medv.lstat_age)
+```
+
+```{r}
+par(mfrow = c(2,2))
+plot(boston_lm_medv.lstat_age)
+```
+## All Predictors
+
+```{r}
+boston_lm_medv_all <- lm(medv ~ ., data = Boston )
+summary(boston_lm_medv_all)
+```
+Since `age` and `indus` is not significant, we will remove them.
+
+```{r}
+boston_lm_medv_allupd <- update(boston_lm_medv_all, ~. -age-indus)
+
+summary(boston_lm_medv_allupd)
+```
+
+# Interaction
+
+
+```{r}
+Boston %>% 
+  plotly::plot_ly(x = ~lstat, y = ~age, z = ~medv, size = 1)
+```
+
+
+```{r}
+boston_lm_medv_lstat_i_age <- lm(medv ~ lstat*age, Boston)
+
+summary(boston_lm_medv_lstat_i_age)
+```
+
+## Quadratic
+
+```{r}
+Boston %>% 
+  ggplot(aes(lstat, medv)) +
+  geom_point(alpha = 0.4) + 
+  geom_smooth(formula = "y ~ x + I(x^2)", method = "lm")
+```
+
+
+```{r}
+lm(medv ~ lstat + I(lstat^2), Boston) %>% summary()
+```
+
