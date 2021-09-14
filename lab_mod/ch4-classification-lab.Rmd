@@ -39,7 +39,7 @@ lbr::ggsave_mac(here("plot/Smarket_ggpairs.png"))
 ```
 
 
-```{r plot_pairs }
+```{r plot_pairs , include=FALSE, eval=FALSE}
 png(here("plot/Smarket_pairs.png"), 
     width = lbr::fig.mac$wd, height = lbr::fig.mac$ht, units = "in",
     res = 320)
