@@ -76,7 +76,6 @@ If we type `lm.fit`,  some basic information about the model is output. For more
 
 
 ```{r chunk5}
-lm.fit
 summary(lm.fit)
 ```
 
@@ -158,6 +157,11 @@ plot(predict(lm.fit), rstudent(lm.fit))
 
 On the basis of the residual plots, there is some evidence of non-linearity.
 Leverage statistics can be computed for any number of predictors using the `hatvalues()` function.
+
+```{r}
+hatvalues(lm.fit)
+```
+
 
 ```{r chunk13}
 plot(hatvalues(lm.fit))
