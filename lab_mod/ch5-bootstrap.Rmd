@@ -11,7 +11,7 @@ output:
     code_download: TRUE
 ---
 
-```{r setup, include=FALSE}
+```{r setup, include=TRUE}
 knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file()) # Set WD to Root
 here::i_am("lab_mod/ch5-bootstrap.Rmd")
 library(tidyverse)
