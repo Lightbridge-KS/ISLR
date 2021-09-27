@@ -24,6 +24,7 @@ usethis::use_git_ignore("quiz")
 usethis::use_git_ignore("quiz_ans")
 
 usethis::use_git_ignore("*.nb.html") # So that Github know its R
+usethis::use_git_ignore("*.html") # So that Github know its R
 ```
 
 # DESCRIPTION
