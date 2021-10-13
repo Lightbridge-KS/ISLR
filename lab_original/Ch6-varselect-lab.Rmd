@@ -34,6 +34,7 @@ dim(Hitters)
 sum(is.na(Hitters$Salary))
 ```
 
+
 Hence we see that `Salary` is missing for $59$ players. The `na.omit()` function removes all of the rows that have missing values in any variable.
 
 ```{r chunk2}
@@ -41,6 +42,11 @@ Hitters <- na.omit(Hitters)
 dim(Hitters)
 sum(is.na(Hitters))
 ```
+
+```{r}
+Hitters
+```
+
 
 
 The `regsubsets()` function (part of the `leaps` library) performs best subset selection by identifying the best model that contains a given number of predictors, where *best* is quantified using RSS. The syntax is the same as for `lm()`. The `summary()` command outputs the best set of variables for each model size.
@@ -204,6 +210,7 @@ from the test data.
 
 ```{r chunk16}
 test.mat <- model.matrix(Salary ~ ., data = Hitters[test, ])
+test.mat
 ```
 
 The
@@ -213,6 +220,18 @@ and for each size `i`, we extract the coefficients from
 `regfit.best` for the best model of that size,  multiply them into
 the appropriate columns of the test model matrix to form the
 predictions, and compute the test MSE.
+
+
+
+```{r}
+test.mat[, names(coef(regfit.best, id = 3))]
+```
+
+
+```{r}
+coef(regfit.best, id = 3)
+```
+
 
 ```{r chunk17}
 val.errors <- rep(NA, 19)
@@ -237,7 +256,7 @@ Since we will be using this function again, we can capture our steps above and w
 
 
 ```{r chunk19}
- predict.regsubsets <- function(object, newdata, id, ...) {
+predict.regsubsets <- function(object, newdata, id, ...) {
   form <- as.formula(object$call[[2]])
   mat <- model.matrix(form, newdata)
   coefi <- coef(object, id = id)
@@ -272,6 +291,7 @@ set.seed(1)
 folds <- sample(rep(1:k, length = n))
 cv.errors <- matrix(NA, k, 19,
     dimnames = list(NULL, paste(1:19)))
+cv.errors
 ```
 
 Now we write a for loop that performs cross-validation. In the $j$th fold, the elements of `folds` that equal `j` are in the test set, and the remainder are in the training set. We make our predictions for each model size (using our new
@@ -288,7 +308,9 @@ for (j in 1:k) {
     cv.errors[j, i] <-
          mean((Hitters$Salary[folds == j] - pred)^2)
    }
- }
+}
+
+cv.errors
 ```
 
 This has given us a $10 \times 19$ matrix, of which the $(j,i)$th element  corresponds to the test MSE for the $j$th
