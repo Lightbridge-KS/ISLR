@@ -44,5 +44,8 @@ usethis::use_package("ISLR2")
 usethis::use_package("MASS")
 usethis::use_package("broom")
 usethis::use_package("plotly")
+
+# For Subset Selection
+usethis::use_package("leaps")
 ```
 

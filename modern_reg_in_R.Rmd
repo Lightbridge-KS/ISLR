@@ -1,0 +1,73 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r setup, include=FALSE}
+knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file()) # Set WD to Root
+library(tidyverse)
+
+```
+
+
+```{r}
+n = 20; 
+M = matrix(NA, ncol = 2, nrow = 10); #check the help file so that you know what this does!
+
+for (i in 1:n){
+    # your code here
+    M[i] <- i
+}
+M
+```
+
+```{r}
+m = matrix(NA, nrow = 2, ncol = 1)
+for (i in 1:2){
+    # your code here
+    m[i] <- print(mean(M[ ,i]))
+}
+
+m
+colMeans(M)
+```
+
+
+```{r}
+mmm <- matrix(1:20, nrow = 10)
+
+mmm[ ,2]
+```
+
+```{r}
+mmm[1:5]
+```
+
+
+```{r}
+f1 = function(){
+    s = sample(c("H", "T"), size = 4, replace = TRUE)
+    return(s)
+}
+
+f1()
+```
+
+
+```{r}
+foo <- matrix(NA, 10, 4)
+
+for (i in 1:nrow(foo)) {
+  
+  foo[i, ]<- f1()
+  
+}
+
+foo
+```
+
+
+```{r}
+replicate(10, f1())
+```
+
